@@ -18,7 +18,7 @@ sys_deps="perl findutils wget" #locate updatedb xargs
 files="coapt apt-snapshot"
 
 ## Destination
-dir=$HOME/tmp/sandbox
+dir=$HOME/bin
 
 # Process
 
