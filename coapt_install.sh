@@ -4,7 +4,7 @@
 #
 # Tristan M. Chase 2017-02-01
 #
-# Installs coapt.sh and any related scripts and programs needed to run it.
+# Installs coapt.sh and any related scripts and system software needed to run it.
 
 
 # Variables
@@ -15,7 +15,7 @@
 sys_deps="perl findutils wget" #locate updatedb xargs
 
 ### coapt-specific
-files="coapt apt-snapshot"
+script_deps="coapt apt-snapshot"
 
 ## Destination
 dir=$HOME/bin
@@ -31,27 +31,24 @@ sleep 2
 echo "Done installing system software."
 echo ""
 
-## Download raw $files from GitHub to $dir
+## Download raw $script_deps from GitHub to $dir
 echo "Downloading script files from GitHub..."
 echo ""
 sleep 2
 
+# Create destination directory and change to it
 mkdir -p $dir
 cd $dir
 
-for file in $files; do
+for file in $script_deps; do
 	wget https://raw.githubusercontent.com/tristanchase/$file/master/$file.sh 
-	mv $file.sh $file
-	chmod 755 $file
+	mv $file.sh $file # Rename the $file (drop the .sh) 
+	chmod 755 $file   # Make the $file executable
 done
 
 sleep 2
 echo "Installation complete. You may now use coapt by typing it on the command line."
 echo ""
-
-## Rename the $files (drop the .sh)
-
-## Make the $files executable
 
 ## Check to see if $dir is in $PATH
 

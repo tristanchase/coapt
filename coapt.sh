@@ -1,23 +1,42 @@
-#! /bin/bash
+#!/bin/bash
 #
 # coapt
 #
+# Tristan M. Chase
+#
 # A script meant to fit various other apt-related scripts together.
+
+# Dependencies
+
+## System
+sys_deps="perl findutils wget" 
+
+## coapt-specific
+script_deps="coapt apt-snapshot"
+
+##########
+# Main
+##########
 
 # Create snapshot of installed packages.  apt-snapshot is a separate script.
 apt-snapshot create
+
 # Update package lists.
 sudo aptitude update
+
 # Upgrade packages.
 sudo aptitude upgrade
+
 # Autoremove packages?
 #
+
 # Clean package cache.
 echo ""
 echo -n  "Cleaning cache..."
 sudo aptitude clean
 echo "done."
 echo ""
+
 ## Clean up older snapshots. benchmark is a separate script.
 ## TODO Add option to benchmark certain snapshots.
 #  echo -n "Deleting old snapshots..."
