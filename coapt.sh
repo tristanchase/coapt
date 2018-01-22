@@ -21,14 +21,26 @@ script_deps="coapt apt-snapshot"
 # Create snapshot of installed packages.  apt-snapshot is a separate script.
 apt-snapshot create
 
+# Autoremove packages? (Requires reboot)
+# TODO Maybe do a dry run with sudo apt-get -s autoremove or something
+echo -n "Would you like to autoremove unused kernels now? (Reqiures reboot) (y/N): "; read response
+
+	case $response in
+		y|Y)
+			sudo apt-get autoremove
+			;;
+
+		*)
+			#do nothing
+			;;
+	esac
+
+
 # Update package lists.
 sudo aptitude update
 
 # Upgrade packages.
 sudo aptitude upgrade
-
-# Autoremove packages?
-#
 
 # Clean package cache.
 echo ""
