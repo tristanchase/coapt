@@ -26,7 +26,7 @@ dir=$HOME/bin
 echo "Installing system software needed for coapt to run..."
 echo ""
 sleep 2
-sudo aptitude install $sys_deps
+sudo apt-get install $sys_deps
 sleep 2
 echo "Done installing system software."
 echo ""
