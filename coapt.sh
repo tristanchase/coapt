@@ -14,18 +14,18 @@ sys_deps="perl findutils wget"
 ## coapt-specific
 script_deps="coapt apt-snapshot"
 
-##########
-# Main
-##########
-
 # Create snapshot of installed packages.  apt-snapshot is a separate script.
 apt-snapshot create
 
 # Autoremove packages? (May require reboot)
-# TODO Maybe do a dry run with sudo apt-get -s autoremove or something
-echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "; read response
+# TODO Maybe do a dry run with sudo apt-get autoremove -s or something
+echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N/): "; read response
 
 	case $response in
+#		?)
+#			sudo apt-get autoremove --dry-run
+#			;;
+#
 		y|Y)
 			sudo apt-get autoremove --purge
 			;;
@@ -35,6 +35,9 @@ echo -n "Would you like to autoremove unused kernels and packages now? (May reqi
 			;;
 	esac
 
+echo ""
+echo -n "Updating..."
+sleep 2
 
 # Update package lists.
 sudo aptitude update
