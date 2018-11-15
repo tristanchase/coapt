@@ -19,7 +19,7 @@ apt-snapshot create
 
 # Autoremove packages? (May require reboot)
 # TODO Maybe do a dry run with sudo apt-get autoremove -s or something
-echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N/): "; read response
+echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "; read response
 
 	case $response in
 #		?)
