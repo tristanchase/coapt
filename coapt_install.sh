@@ -12,7 +12,7 @@
 ## Dependencies
 
 ### System
-sys_deps="perl findutils wget" #locate updatedb xargs
+sys_deps="aptitude perl findutils wget" #locate updatedb xargs
 
 ### coapt-specific
 script_deps="coapt apt-snapshot"
