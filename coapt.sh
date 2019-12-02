@@ -7,9 +7,6 @@ set -e
 #
 # A script meant to fit various apt-related scripts together.
 
-# Be root
-test $( id -u )  -eq 0 || exec sudo $0 "$@"
-
 # Dependencies
 
 ## System
@@ -28,7 +25,7 @@ read response
 case $response in
 
 	y|Y)
-		apt autoremove --purge
+		sudo apt autoremove --purge
 		;;
 
 	*)
@@ -41,15 +38,15 @@ echo -n "Updating..."
 sleep 2
 
 # Update package lists.
-aptitude update
+sudo aptitude update
 
 # Upgrade packages.
-aptitude upgrade
+sudo aptitude upgrade
 
 # Clean package cache.
 echo ""
 echo -n  "Cleaning cache..."
-aptitude clean
+sudo aptitude clean
 echo "done."
 echo ""
 
@@ -61,7 +58,7 @@ if [ -f /var/run/reboot-required ]; then
 
 	case $response in
 		y|Y)
-			reboot
+			sudo reboot
 			;;
 
 		*)
