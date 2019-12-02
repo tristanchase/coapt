@@ -1,0 +1,9 @@
+= coapt
+
+== Installing
+
+Copy and paste this into your favo[u]rite terminal:
+
+....
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/tristanchase/coapt/master/coapt_install.sh)"
+....
