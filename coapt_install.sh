@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 #
 # coapt_install.sh
 #
@@ -6,6 +7,8 @@
 #
 # Installs coapt.sh and any related scripts and system software needed to run it.
 
+# Be root
+test $( id -u )  -eq 0 || exec sudo $0 "$@"
 
 # Variables
 
@@ -26,7 +29,7 @@ dir=$HOME/bin
 echo "Installing system software needed for coapt to run..."
 echo ""
 sleep 2
-sudo apt-get install $sys_deps
+apt install $sys_deps
 sleep 2
 echo "Done installing system software."
 echo ""
