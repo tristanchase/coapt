@@ -1,4 +1,6 @@
-= coapt
+= How to Use *coapt*
+:author: Tristan M. Chase
+:toc:
 
 == Installing
 
