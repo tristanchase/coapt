@@ -9,6 +9,9 @@ set -e
 
 # Variables
 
+## Preserve starting directory.
+start_dir="$(pwd)"
+
 ## Dependencies
 
 ### System
@@ -36,16 +39,18 @@ echo "Downloading script files from GitHub..."
 echo ""
 sleep 2
 
-# Create destination directory and change to it
+### Create destination directory and change to it
 mkdir -p $dir
 cd $dir
 
+### Get the files.
 for file in $script_deps; do
 	wget https://raw.githubusercontent.com/tristanchase/$file/master/$file.sh 
 	mv $file.sh $file # Rename the $file (drop the .sh) 
 	chmod 755 $file   # Make the $file executable
 done
 
+### Finish up.
 sleep 2
 echo "Installation complete. You may now use coapt by typing it on the command line."
 echo ""
@@ -53,5 +58,8 @@ echo ""
 ## Check to see if $dir is in $PATH
 
 ### If not, add it and modify .(bas|zs|oh-my-zs)hrc to include it.
+
+## Return to starting directory.
+cd $start_dir
 
 exit 0
