@@ -27,7 +27,7 @@ sys_deps="aptitude perl findutils wget"
 script_deps="coapt apt-snapshot"
 
 # Create snapshot of installed packages.  apt-snapshot is a separate script.
-sudo apt-snapshot create
+apt-snapshot create
 
 # Autoremove packages? (May require reboot)
 echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
