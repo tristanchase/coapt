@@ -45,8 +45,8 @@ cd $dir
 
 ### Get the files.
 for file in $script_deps; do
-	wget https://raw.githubusercontent.com/tristanchase/$file/master/$file.sh 
-	mv $file.sh $file # Rename the $file (drop the .sh) 
+	wget https://raw.githubusercontent.com/tristanchase/$file/master/$file.sh
+	mv $file.sh $file # Rename the $file (drop the .sh)
 	chmod 755 $file   # Make the $file executable
 done
 
