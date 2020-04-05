@@ -6,7 +6,7 @@ IFS=$'\n\t'
 
 #-----------------------------------
 
-#/ Usage: coapt [<options>] [<arguments>]
+#/ Usage: coapt [--help]
 #/ Description: A script meant to fit various apt-related scripts together.
 #/ Examples:
 #/ Options:
