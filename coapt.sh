@@ -58,7 +58,7 @@ cleanup() {
 			;;
 		*) # any other exit number; indicates an error in the script
 			#clean up stray files
-			#fatal ""$(basename $0)": [error message here]"
+			#fatal ""$(basename $0).$$": [error message here]"
 			;;
 	esac
 }
