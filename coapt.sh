@@ -125,7 +125,7 @@ if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
 	# Update package lists.
 	sudo aptitude update
 
-	# TODO Clean up this section
+	# TODO Clean up this section; get rid of _held_packages_empty variable; base tests on _held_packages_file
 	# TODO Add option to change the list of held packages with help
 	# Check to see if ${HOME}/.config/held-packages is empty
 	_held_packages_empty=0 # 0=not empty, 1=empty
