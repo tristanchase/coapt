@@ -133,7 +133,8 @@ if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
 	if [[ -s "${_held_packages_file}" ]]; then
 		echo "The following packages will be held at their current version:"
 		_held_packages="$(cat ${_held_packages_file})"
-		echo ${_held_packages}
+		#echo ${_held_packages}
+		aptitude versions $(echo ${_held_packages})
 		echo ""
 	else
 		_held_packages_empty=1
