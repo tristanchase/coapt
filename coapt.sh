@@ -1,21 +1,7 @@
 #!/usr/bin/env bash
 
-# Low-tech debug mode
-if [[ "${1:-}" =~ (-d|--debug) ]]; then
-	set -x
-	_debug_file=""${HOME}"/tmp/$(basename "${0}")-debug.$$"
-	exec > >(tee "${_debug_file:-}") 2>&1
-	shift
-fi
-
-# Same as set -euE -o pipefail
-set -o errexit
-set -o nounset
-set -o errtrace
-set -o pipefail
-IFS=$'\n\t'
-
 #-----------------------------------
+# Usage Section
 
 #//Usage: coapt [ {-d|--debug} ] [ {-h|--help} ]
 #//Description: A script meant to fit various apt-related scripts together.
@@ -32,62 +18,20 @@ IFS=$'\n\t'
 # Scripts: apt-snapshot (optional)
 
 #-----------------------------------
-# Low-tech help option
-
-function __usage() { grep '^#/' "${0}" | cut -c4- ; exit 0 ; }
-expr "$*" : ".*-h\|--help" > /dev/null && __usage
-
-#-----------------------------------
-# Low-tech logging function
-
-readonly LOG_FILE=""${HOME}"/tmp/$(basename "${0}").log"
-function __info()    { echo "[INFO]    $*" | tee -a "${LOG_FILE}" >&2 ; }
-function __warning() { echo "[WARNING] $*" | tee -a "${LOG_FILE}" >&2 ; }
-function __error()   { echo "[ERROR]   $*" | tee -a "${LOG_FILE}" >&2 ; }
-function __fatal()   { echo "[FATAL]   $*" | tee -a "${LOG_FILE}" >&2 ; exit 1 ; }
+# TODO Section
+#
+# * Update dependencies section
 
 #-----------------------------------
-# Trap functions
 
-function __traperr() {
-	__error "${FUNCNAME[1]}: ${BASH_COMMAND}: $?: ${BASH_SOURCE[1]}.$$ at line ${BASH_LINENO[0]}"
-}
+# Initialize variables
+#_temp="file.$$"
 
-function __ctrl_c(){
-	exit 2
-}
+# List of temp files to clean up on exit (put last)
+#_tempfiles=("${_temp}")
 
-function __cleanup() {
-	case "$?" in
-		0) # exit 0; success!
-			#do nothing
-			;;
-		2) # exit 2; user termination
-			__info ""$(basename ${0}).$$": script terminated by user."
-			;;
-		3) # exit 3; reboot deferred
-			__info ""$(basename ${0}).$$": reboot deferred by user."
-			;;
-		*) # any other exit number; indicates an error in the script
-			#clean up stray files
-			#__fatal ""$(basename ${0}).$$": [error message here]"
-			;;
-	esac
-
-	if [[ -n "${_debug_file:-}" ]]; then
-		echo "Debug file is: "${_debug_file:-}""
-	fi
-}
-
-#-----------------------------------
-# Main script wrapper
-
-if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
-	trap __traperr ERR
-	trap __ctrl_c INT
-	trap __cleanup EXIT
-	#-----------------------------------
-	# Main Script
+# Put main script here
+function __main_script {
 
 	# Config files
 	_config_dir="${HOME}/.config/coapt"
@@ -182,16 +126,41 @@ if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
 
 	fi
 
-	# End Main Script
-	#-----------------------------------
+} #end __main_script
+
+# Source helper functions
+if [[ -e ~/.functions.sh ]]; then
+	source ~/.functions.sh
+fi
+
+# Low-tech logging function
+__logger__
+
+# Get some basic options
+# TODO Make this more robust
+if [[ "${1:-}" =~ (-d|--debug) ]]; then
+	__debugger__
+elif [[ "${1:-}" =~ (-h|--help) ]]; then
+	__usage__
+fi
+
+# Bash settings
+# Same as set -euE -o pipefail
+set -o errexit
+set -o nounset
+set -o errtrace
+set -o pipefail
+IFS=$'\n\t'
+
+# Main Script Wrapper
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+	trap __traperr__ ERR
+	trap __ctrl_c__ INT
+	trap __cleanup__ EXIT
+
+	__main_script
+
 
 fi
 
-# End of main script wrapper
-#-----------------------------------
-
 exit 0
-
-# TODO (bottom up)
-#
-# * Update dependencies section
