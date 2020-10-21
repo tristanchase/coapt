@@ -96,6 +96,7 @@ function __main_script {
 	# Upgrade packages.
 	sudo aptitude upgrade
 
+	#TODO Add these sections to a local cleanup function so that they will execute on exit or Ctrl-C
 	#Release hold on any held packages.
 	if [ ${_held_packages_empty} -ne 1 ]; then
 		sudo aptitude unhold ${_held_packages}
@@ -120,7 +121,8 @@ function __main_script {
 				;;
 
 			*)
-				exit 3
+				__info__ ""$(basename ${0}).$$": reboot deferred by user."
+				exit 3 #reboot deferred
 				;;
 		esac
 
@@ -146,7 +148,7 @@ fi
 
 # Bash settings
 # Same as set -euE -o pipefail
-set -o errexit
+#set -o errexit
 set -o nounset
 set -o errtrace
 set -o pipefail
