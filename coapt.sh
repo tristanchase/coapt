@@ -68,6 +68,7 @@ function __main_script {
 
 	# Update package lists.
 	sudo aptitude update
+	#printf "%b\n" "[dummy]"
 
 	# TODO Clean up this section; get rid of _held_packages_empty variable; base tests on _held_packages_file
 	# TODO Add option to change the list of held packages with help
@@ -96,19 +97,6 @@ function __main_script {
 	# Upgrade packages.
 	sudo aptitude upgrade
 
-	#TODO Add these sections to a local cleanup function so that they will execute on exit or Ctrl-C
-	#Release hold on any held packages.
-	if [ ${_held_packages_empty} -ne 1 ]; then
-		sudo aptitude unhold ${_held_packages}
-	fi
-
-	# Clean package cache.
-	echo ""
-	echo -n  "Cleaning cache..."
-	sudo aptitude clean
-	echo "done."
-	echo ""
-
 	# Give option to reboot system, if required.
 	if [ -f /var/run/reboot-required ]; then
 		cat /var/run/reboot-required
@@ -117,6 +105,9 @@ function __main_script {
 
 		case ${_response} in
 			y|Y)
+				__local_cleanup
+				printf "%b\n" "Rebooting system in 5 seconds..."
+				sleep 5
 				sudo reboot
 				;;
 
@@ -130,7 +121,25 @@ function __main_script {
 
 } #end __main_script
 
-# Source helper functions
+# Local functions (__local_function)
+
+function __local_cleanup {
+	#Release hold on any held packages.
+	if [ ${_held_packages_empty} -ne 1 ]; then
+		printf "%b\n" "Releasing hold on packages..."
+		sudo aptitude unhold ${_held_packages} && printf "%b\n" "done."
+	fi
+
+	# Clean package cache.
+	echo ""
+	echo -n  "Cleaning cache..."
+	sudo aptitude clean
+	echo "done."
+	printf "%b\n" "Cleanup complete."
+	echo ""
+}
+
+# Source helper functions (__helper_function__)
 if [[ -e ~/.functions.sh ]]; then
 	source ~/.functions.sh
 fi
