@@ -64,11 +64,10 @@ function __main_script {
 
 	echo ""
 	echo "Updating..."
-	sleep 2
+	#sleep 2
 
 	# Update package lists.
 	sudo aptitude update
-	#printf "%b\n" "[dummy]"
 
 	# TODO Clean up this section; get rid of _held_packages_empty variable; base tests on _held_packages_file
 	# TODO Add option to change the list of held packages with help
@@ -126,12 +125,12 @@ function __main_script {
 function __local_cleanup {
 	#Release hold on any held packages.
 	if [ ${_held_packages_empty} -ne 1 ]; then
+		printf "%b\n"
 		printf "%b\n" "Releasing hold on packages..."
 		sudo aptitude unhold ${_held_packages} && printf "%b\n" "done."
 	fi
 
 	# Clean package cache.
-	echo ""
 	echo -n  "Cleaning cache..."
 	sudo aptitude clean
 	echo "done."
