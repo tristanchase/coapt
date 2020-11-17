@@ -54,6 +54,7 @@ function __main_script {
 	case ${_response} in
 
 		y|Y)
+			__lock_check
 			sudo apt autoremove --purge
 			;;
 
@@ -67,6 +68,7 @@ function __main_script {
 	#sleep 2
 
 	# Update package lists.
+	__lock_check
 	sudo aptitude update
 
 	# TODO Clean up this section; get rid of _held_packages_empty variable; base tests on _held_packages_file
@@ -90,10 +92,12 @@ function __main_script {
 
 	# Hold any packages at their current version?
 	if [ ${_held_packages_empty} -ne 1 ]; then
+		__lock_check
 		sudo aptitude hold ${_held_packages}
 	fi
 
 	# Upgrade packages.
+	__lock_check
 	sudo aptitude upgrade
 
 	# Give option to reboot system, if required.
@@ -124,25 +128,44 @@ function __main_script {
 
 } #end __main_script
 
-# Local functions (__local_function)
+# Local functions
 
 function __local_cleanup {
 	#Release hold on any held packages.
 	if [ ${_held_packages_empty} -ne 1 ]; then
 		printf "%b\n"
 		printf "%b\n" "Releasing hold on packages..."
+		__lock_check
 		sudo aptitude unhold ${_held_packages} && printf "%b\n" "done."
 	fi
 
 	# Clean package cache.
 	echo -n  "Cleaning cache..."
+	__lock_check
 	sudo aptitude clean
 	echo "done."
 	printf "%b\n" "Cleanup complete."
 	echo ""
 }
 
-# Source helper functions (__helper_function__)
+function __lock_check {
+	i=0
+	tput sc
+	while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
+		case $(($i % 4)) in
+			0 ) j="-" ;;
+			1 ) j="\\" ;;
+			2 ) j="|" ;;
+			3 ) j="/" ;;
+		esac
+		tput rc
+		echo -en "\r[$j] Waiting for other software managers to finish..."
+		sleep 0.5
+		((i=i+1))
+	done
+}
+
+# Source helper functions
 if [[ -e ~/.functions.sh ]]; then
 	source ~/.functions.sh
 fi
