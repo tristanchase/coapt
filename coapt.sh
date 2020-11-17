@@ -42,6 +42,7 @@ function __main_script {
 		echo "Adding some missing config files..."
 		mkdir -p ${_config_dir}
 		touch ${_held_packages_file}
+		__info__ "Added file "${_held_packages_file}"."
 	fi
 
 	# Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
@@ -149,9 +150,19 @@ function __local_cleanup {
 }
 
 function __lock_check {
+	# Check if any other processes have a lock on the package management system.
+
+	# Only set this if your $SHELL is bash
+	if [[ $SHELL =~ (bash) ]]; then
+		shopt -s globstar
+	fi
+
+	# Dynamically find related lockfiles.
+	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 	i=0
 	tput sc
-	while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
+	#while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
+	while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
 		case $(($i % 4)) in
 			0 ) j="-" ;;
 			1 ) j="\\" ;;
@@ -183,7 +194,7 @@ fi
 
 # Bash settings
 # Same as set -euE -o pipefail
-#set -o errexit
+#set -o errexit # aptitude upgrade exits with 1 if aborted
 set -o nounset
 set -o errtrace
 set -o pipefail
