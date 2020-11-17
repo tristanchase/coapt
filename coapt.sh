@@ -105,8 +105,12 @@ function __main_script {
 		case ${_response} in
 			y|Y)
 				__local_cleanup
-				printf "%b\n" "Rebooting system in 5 seconds..."
-				sleep 5
+				_seconds="5"
+				while [ "${_seconds}" -gt 0 ]; do
+					printf "%b" "Rebooting in "${_seconds}" seconds...\033[0K\r"
+					sleep 1
+					: $((_seconds--))
+				done
 				sudo reboot
 				;;
 
