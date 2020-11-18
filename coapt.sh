@@ -33,11 +33,11 @@
 # Put main script here
 function __main_script {
 
-	# Config files
+	## Config files
 	_config_dir="${HOME}/.config/coapt"
 	_held_packages_file="${_config_dir}/held-packages"
 
-	# Check for config files
+	## Check for config files
 	if [[ ! -e ${_held_packages_file} ]]; then
 		echo "Adding some missing config files..."
 		mkdir -p ${_config_dir}
@@ -45,10 +45,10 @@ function __main_script {
 		__info__ "Added file "${_held_packages_file}"."
 	fi
 
-	# Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
+	## Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
 	#apt-snapshot create
 
-	# Autoremove packages? (May require reboot)
+	## Autoremove packages? (May require reboot)
 	echo -n "Would you like to autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
 	read _response
 
@@ -66,11 +66,15 @@ function __main_script {
 
 	echo ""
 	echo "Updating..."
-	#sleep 2
 
-	# Update package lists.
+	## Update package lists.
 	__lock_check
 	sudo aptitude update
+
+	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
+	_hold_dir=""${HOME}"/.local/share/coapt/hold"
+	mkdir -p "${_hold_dir}"
+	_held_packages=( $(basename $(printf "%b\n" "${_hold_dir}"/*) ) )
 
 	# TODO Clean up this section; get rid of _held_packages_empty variable; base tests on _held_packages_file
 	# TODO Add option to change the list of held packages with help
@@ -79,9 +83,8 @@ function __main_script {
 
 	if [[ -s "${_held_packages_file}" ]]; then
 		echo "The following packages will be held at their current version:"
-		_held_packages="$(cat ${_held_packages_file})"
-		#echo ${_held_packages}
-		aptitude versions $(echo ${_held_packages})
+		#_held_packages="$(cat ${_held_packages_file})"
+		aptitude versions $(printf "%b\n" "${_held_packages[@]}")
 		echo ""
 	else
 		_held_packages_empty=1
@@ -97,11 +100,11 @@ function __main_script {
 		sudo aptitude hold ${_held_packages}
 	fi
 
-	# Upgrade packages.
+	## Upgrade packages.
 	__lock_check
 	sudo aptitude upgrade
 
-	# Give option to reboot system, if required.
+	## Give option to reboot system, if required.
 	if [ -f /var/run/reboot-required ]; then
 		cat /var/run/reboot-required
 		echo -n "Would you like to reboot the system now? (y/N): "
@@ -132,15 +135,15 @@ function __main_script {
 # Local functions
 
 function __local_cleanup {
-	#Release hold on any held packages.
+	## Release hold on any held packages.
 	if [ ${_held_packages_empty} -ne 1 ]; then
 		printf "%b\n"
-		printf "%b\n" "Releasing hold on packages..."
+		printf "%b" "Releasing hold on packages..."
 		__lock_check
-		sudo aptitude unhold ${_held_packages} && printf "%b\n" "done."
+		sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
 	fi
 
-	# Clean package cache.
+	## Clean package cache.
 	echo -n  "Cleaning cache..."
 	__lock_check
 	sudo aptitude clean
@@ -150,14 +153,14 @@ function __local_cleanup {
 }
 
 function __lock_check {
-	# Check if any other processes have a lock on the package management system.
+	## Check if any other processes have a lock on the package management system.
 
 	# Only set this if your $SHELL is bash
 	if [[ $SHELL =~ (bash) ]]; then
 		shopt -s globstar
 	fi
 
-	# Dynamically find related lockfiles.
+	## Dynamically find related lockfiles.
 	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 	i=0
 	tput sc
