@@ -4,9 +4,11 @@
 # Usage Section
 
 #//Usage: coapt [ {-d|--debug} ] [ {-h|--help} ]
+#**Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-a|--autoremove} ]
 #//Description: A script meant to fit various apt-related scripts together.
 #//Examples: coapt; coapt --debug
 #//Options:
+#**	-a --autoremove	Autoremove unused packages
 #//	-d --debug	Enable debug mode
 #//	-h --help	Display this help message
 
@@ -22,7 +24,8 @@
 #
 # * Update dependencies section
 # * Make autoremove an option
-# * Modularize steps with functions
+#   * Update usage section
+# > Modularize steps with functions
 
 # DONE
 # + Replace echo with printf
@@ -61,7 +64,13 @@ function __main_script {
 	_hold_dir=""${HOME}"/.local/share/coapt/hold"
 	mkdir -p "${_hold_dir}"
 	_held_packages=( $(basename $(printf "%b\n" "${_hold_dir}"/*) ) )
+function __hold_packages__ {
+	:
+}
 
+function __unhold_packages__ {
+	:
+}
 
 	if [[ -n "${_held_packages}" ]]; then
 		printf "%b\n" "The following packages will be held at their current version:"
@@ -76,6 +85,10 @@ function __main_script {
 	sudo aptitude upgrade
 
 	## Give option to reboot system, if required.
+	function __reboot__ {
+		:
+	}
+
 	if [ -f /var/run/reboot-required ]; then
 		cat /var/run/reboot-required
 		printf "%b" -n "Would you like to reboot the system now? (y/N): "
