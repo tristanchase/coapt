@@ -25,10 +25,18 @@
 # * Update dependencies section
 # * Make autoremove an option
 #   * Update usage section
+#   * Update README.adoc
 # > Modularize steps with functions
+# * Rework snapshot section
+#   * Get rid of apt-snapshot
+#     * coapt.sh
+#     * coapt-install.sh
+#   * Remove perl from system deps
+#     * coapt.sh
+#     * coapt-install.sh
+#   * Use dpkg --list
 
 # DONE
-# + Replace echo with printf
 
 #-----------------------------------
 

@@ -9,7 +9,7 @@
 . Create a snapshot of your currently installed packages (with the optional *apt-snapshot* script, which I didn't write)
 . Ask you if you would like to remove old kernels
 . Update packages
-. Hold any packages you specify at their current version (in the file `$HOME/.config/coapt/held-packages`)
+. Hold any packages you specify at their current version (in the directory `$HOME/.local/share/coapt/hold`)
 . Upgrade packages
 . Release any hold on packages
 . Clean the package cache
