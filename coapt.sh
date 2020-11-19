@@ -26,17 +26,17 @@
 # * Make autoremove an option
 #   * Update usage section
 #   * Update README.adoc
-# > Modularize steps with functions
 # * Rework snapshot section
 #   * Get rid of apt-snapshot
 #     * coapt.sh
-#     * coapt-install.sh
+#     * coapt_install.sh
 #   * Remove perl from system deps
 #     * coapt.sh
 #     * coapt-install.sh
 #   * Use dpkg --list
 
 # DONE
+# + Modularize steps with functions
 
 #-----------------------------------
 
@@ -49,8 +49,16 @@
 # Put main script here
 function __main_script {
 
+	_share_dir=""${HOME}"/.local/share/coapt"
+
 	## Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
 	#apt-snapshot create
+	function __snapshot__ {
+		_snapshot_dir=""${_share_dir}"/snapshots"
+		_snapshot_file=""${_snapshot_dir}"/$(date -Iseconds)-coapt.$$"
+		mkdir -p "${_snapshot_dir}"
+		dpkg --list > "${_snapshot_file}"
+	}
 
 	## Autoremove packages? (May require reboot)
 	printf "%b" "Autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
@@ -62,35 +70,62 @@ function __main_script {
 	[[ "${_autoremove_yN}" =~ (y|Y) ]] && __autoremove__ || printf "%b\n" "Autoremove: skipped"
 
 
-	printf "%b\n" "Updating..."
-
 	## Update package lists.
+	function __update__ {
+	printf "%b\n" "Updating package lists..."
 	__lock_check
 	sudo aptitude update
+	}
+
+	#__update__
 
 	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
-	_hold_dir=""${HOME}"/.local/share/coapt/hold"
+	#_hold_dir=""${HOME}"/.local/share/coapt/hold"
+	_hold_dir=""${_share_dir}"/hold"
 	mkdir -p "${_hold_dir}"
-	_held_packages=( $(basename $(printf "%b\n" "${_hold_dir}"/*) ) )
-function __hold_packages__ {
-	:
-}
+	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir}"/*) ) )
 
-function __unhold_packages__ {
-	:
-}
+	function __hold_packages__ {
+		if [[ -n"${_held_packages}" ]]; then
+			printf "%b\n" "The following packages will be held at their current version:"
+			aptitude versions $(printf "%b\n" "${_held_packages[@]}")
+			printf "%b\n"
+			__lock_check
+			sudo aptitude -q=3 hold ${_held_packages}
+		fi
+	}
 
-	if [[ -n "${_held_packages}" ]]; then
-		printf "%b\n" "The following packages will be held at their current version:"
-		aptitude versions $(printf "%b\n" "${_held_packages[@]}")
-		printf "%b\n"
-		__lock_check
-		sudo aptitude -q=3 hold ${_held_packages}
-	fi
+	__hold_packages__
 
 	## Upgrade packages.
-	__lock_check
-	sudo aptitude upgrade
+	function __upgrade__ {
+		__lock_check
+		sudo aptitude upgrade
+	}
+
+	#__upgrade__
+
+	## Release hold on any held packages.
+	function __unhold_packages__ {
+		if [[ -n "${_held_packages}" ]]; then
+			printf "%b\n"
+			printf "%b" "Releasing hold on packages..."
+			__lock_check
+			sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
+		fi
+	}
+
+	#__unhold_packages__
+
+	## Clean package cache.
+	function __clean_cache__ {
+		printf "%b" "Cleaning cache..."
+		__lock_check
+		sudo aptitude clean
+		printf "%b\n" "done."
+		printf "%b\n" "Cleanup complete."
+		printf "%b\n"
+	}
 
 	## Give option to reboot system, if required.
 	function __reboot__ {
@@ -126,21 +161,8 @@ function __unhold_packages__ {
 
 # Local functions
 function __local_cleanup {
-	## Release hold on any held packages.
-	if [[ -n "${_held_packages}" ]]; then
-		printf "%b\n"
-		printf "%b" "Releasing hold on packages..."
-		__lock_check
-		sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
-	fi
-
-	## Clean package cache.
-	printf "%b" "Cleaning cache..."
-	__lock_check
-	sudo aptitude clean
-	printf "%b\n" "done."
-	printf "%b\n" "Cleanup complete."
-	printf "%b\n"
+	__unhold_packages__
+	__clean_cache__
 }
 
 function __lock_check {
