@@ -21,9 +21,11 @@
 # TODO Section
 #
 # * Update dependencies section
-# * Replace echo with printf
 # * Make autoremove an option
 # * Modularize steps with functions
+
+# DONE
+# + Replace echo with printf
 
 #-----------------------------------
 
@@ -40,7 +42,7 @@ function __main_script {
 	#apt-snapshot create
 
 	## Autoremove packages? (May require reboot)
-	echo -n "Autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
+	printf "%b" "Autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
 	read _autoremove_yN
 	function __autoremove__ {
 		__lock_check
@@ -49,8 +51,7 @@ function __main_script {
 	[[ "${_autoremove_yN}" =~ (y|Y) ]] && __autoremove__ || printf "%b\n" "Autoremove: skipped"
 
 
-	echo ""
-	echo "Updating..."
+	printf "%b\n" "Updating..."
 
 	## Update package lists.
 	__lock_check
@@ -63,9 +64,9 @@ function __main_script {
 
 
 	if [[ -n "${_held_packages}" ]]; then
-		echo "The following packages will be held at their current version:"
+		printf "%b\n" "The following packages will be held at their current version:"
 		aptitude versions $(printf "%b\n" "${_held_packages[@]}")
-		echo ""
+		printf "%b\n"
 		__lock_check
 		sudo aptitude -q=3 hold ${_held_packages}
 	fi
@@ -77,7 +78,7 @@ function __main_script {
 	## Give option to reboot system, if required.
 	if [ -f /var/run/reboot-required ]; then
 		cat /var/run/reboot-required
-		echo -n "Would you like to reboot the system now? (y/N): "
+		printf "%b" -n "Would you like to reboot the system now? (y/N): "
 		read _response
 
 		case ${_response} in
@@ -113,12 +114,12 @@ function __local_cleanup {
 	fi
 
 	## Clean package cache.
-	echo -n  "Cleaning cache..."
+	printf "%b" "Cleaning cache..."
 	__lock_check
 	sudo aptitude clean
-	echo "done."
+	printf "%b\n" "done."
 	printf "%b\n" "Cleanup complete."
-	echo ""
+	printf "%b\n"
 }
 
 function __lock_check {
@@ -142,7 +143,7 @@ function __lock_check {
 			3 ) j="/" ;;
 		esac
 		tput rc
-		echo -en "\r[$j] Waiting for other software managers to finish..."
+		printf "%b" "\r[$j] Waiting for other software managers to finish..."
 		sleep 0.5
 		((i=i+1))
 	done
