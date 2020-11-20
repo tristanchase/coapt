@@ -6,7 +6,7 @@
 
 *coapt* is a collection of *apt*-related scripts arranged in a logical order.  It will:
 
-. Create a snapshot of your currently installed packages (with the optional *apt-snapshot* script, which I didn't write)
+. Create a snapshot of your currently installed packages and exit if the `-s` or `--snapshot` option is passed (in the directory `$HOME/.local/share/coapt/snapshots`)
 . Autoremove unused packages if the `-a` or `--autoremove` option is passed
 . Update packages
 . Hold any packages you specify at their current version (in the directory `$HOME/.local/share/coapt/hold`)

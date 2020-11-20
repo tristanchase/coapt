@@ -15,10 +15,10 @@ start_dir="$(pwd)"
 ## Dependencies
 
 ### System
-sys_deps="aptitude perl findutils wget" #locate updatedb xargs
+sys_deps="aptitude findutils wget" #locate updatedb xargs
 
 ### coapt-specific
-script_deps="coapt apt-snapshot"
+script_deps="coapt"
 
 ## Destination
 dir=$HOME/bin

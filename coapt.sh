@@ -3,7 +3,7 @@
 #-----------------------------------
 # Usage Section
 
-#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-a|--autoremove} ]
+#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-s|--snapshot} | {-a|--autoremove} ]
 #//Description: A script meant to fit various apt-related scripts together.
 #//Examples: coapt; coapt --debug; coapt --autoremove
 #//Options:
@@ -11,36 +11,32 @@
 #//	-d --debug	Enable debug mode
 #//	-h --help	Display this help message
 #**	   --holds	Manage held packages
-#**	-s --snapshot	Create a snapshot of installed packages
+#//	-s --snapshot	Create a snapshot of installed packages and exit
 
 # Created: Long ago
 # Tristan M. Chase <tristan.m.chase@gmail.com>
 
 # Depends on:
-# System: aptitude perl findutils wget
-# Scripts: apt-snapshot (optional)
+# System: aptitude findutils wget
 
 #-----------------------------------
 # TODO Section
 #
-# * Make snapshot an option
-#   * Rework snapshot section
-#     * Get rid of apt-snapshot
-#       * coapt.sh
-#       * install.sh
-#     * Remove perl from system deps
-#       * coapt.sh
-#       * install.sh
-#     * Use dpkg --list
-#   * Update usage section
-#   * Update README.adoc
 # * Make hold management an option
 #   * Update usage section
 #   * Update README.adoc
 # * Update dependencies section
 
 # DONE
-# + Make autoremove an option
+# + Make snapshot an option
+#   + Rework snapshot section
+#     + Get rid of apt-snapshot
+#       + coapt.sh
+#       + install.sh
+#     + Remove perl from system deps
+#       + coapt.sh
+#       + install.sh
+#     + Use dpkg --list
 #   + Update usage section
 #   + Update README.adoc
 
@@ -50,18 +46,30 @@
 #_temp="file.$$"
 
 # List of temp files to clean up on exit (put last)
-#_tempfiles=("${_temp}")
+#_tempfiles=("${_temp:-}")
 
 # Put main script here
 function __main_script {
 
+	## Define share directory.
+
 	_share_dir=""${HOME}"/.local/share/coapt"
 
-	## Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
+	# Dynamically find related lockfiles.
 
-	#apt-snapshot create
+	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
-	## Autoremove packages? (May require reboot)
+	## Create snapshot of installed packages and exit (optional).
+
+	if [[ "${_snapshot_yN:-}" =~ (y) ]]; then
+		__snapshot__
+	fi
+
+	## Autoremove packages (may require reboot) (optional).
+
+	if [[ "${_autoremove_yN:-}" =~ (y) ]]; then
+		__autoremove__
+	fi
 
 	## Update package lists.
 
@@ -75,9 +83,9 @@ function __main_script {
 
 	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
 
-	_hold_dir=""${_share_dir}"/hold"
-	mkdir -p "${_hold_dir}"
-	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir}"/*) ) )
+	_hold_dir=""${_share_dir:-}"/hold"
+	mkdir -p "${_hold_dir:-}"
+	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir:-}"/*) ) )
 
 	__hold_packages__
 
@@ -90,9 +98,13 @@ function __main_script {
 
 	__upgrade__
 
-	## Release hold on any held packages (in __local_cleanup__).
+	## Release hold on any held packages.
 
-	## Clean package cache (in __local_cleanup__).
+	__unhold_packages__
+
+	## Clean package cache.
+
+	__clean_cache__
 
 	## Give option to reboot system, if required.
 
@@ -105,12 +117,11 @@ function __main_script {
 		printf "%b" -n "Would you like to reboot the system now? (y/N): "
 		read _response
 
-		case ${_response} in
+		case ${_response:-} in
 			y|Y)
-				__local_cleanup__
 				_seconds="5"
-				while [ "${_seconds}" -gt 0 ]; do
-					printf "%b" "Rebooting in "${_seconds}" seconds...\033[0K\r"
+				while [ "${_seconds:-}" -gt 0 ]; do
+					printf "%b" "Rebooting in "${_seconds:-}" seconds...\033[0K\r"
 					sleep 1
 					: $((_seconds--))
 				done
@@ -138,38 +149,35 @@ function __autoremove__ {
 function __clean_cache__ {
 	printf "%b" "Cleaning cache..."
 	__lock_check__
-	sudo aptitude clean
-	printf "%b\n" "done."
+	sudo aptitude clean && printf "%b\n" "done." || printf "%b\n" "Error! Unable to clean cache."
 	printf "%b\n" "Cleanup complete."
 	printf "%b\n"
 }
 
 function __hold_packages__ {
-	if [[ -n"${_held_packages}" ]]; then
+	if [[ -n"${_held_packages:-}" ]]; then
 		printf "%b\n" "The following packages will be held at their current version:"
-		aptitude versions $(printf "%b\n" "${_held_packages[@]}")
+		aptitude versions $(printf "%b\n" "${_held_packages[@]:-}")
 		printf "%b\n"
 		__lock_check__
-		sudo aptitude -q=3 hold ${_held_packages}
+		sudo aptitude -q=3 hold ${_held_packages:-}
 	fi
 }
 
 function __local_cleanup__ {
-	__unhold_packages__
-	__clean_cache__
+	:
 }
 
 ## Check if any other processes have a lock on the package management system.
 
 # Dynamically find related lockfiles.
-_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
+#_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
 function __lock_check__ {
-
 	i=0
 	tput sc
 	#while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
-	while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
+	while sudo fuser ${_lockfiles:-}  >/dev/null 2>&1; do
 		case $(($i % 4)) in
 			0 ) j="-" ;;
 			1 ) j="\\" ;;
@@ -184,18 +192,21 @@ function __lock_check__ {
 }
 
 function __snapshot__ {
-	_snapshot_dir=""${_share_dir}"/snapshots"
-	_snapshot_file=""${_snapshot_dir}"/$(date -Iseconds)-coapt.$$"
-	mkdir -p "${_snapshot_dir}"
-	dpkg --list > "${_snapshot_file}"
+	_snapshot_dir=""${_share_dir:-}"/snapshots"
+	_snapshot_file=""${_snapshot_dir:-}"/$(date -Iseconds)-coapt.$$"
+	printf "%b" "Creating snapshot..."
+	mkdir -p "${_snapshot_dir:-}"
+	dpkg --list > "${_snapshot_file:-}" && printf "%b\n" "done."
+	printf "%b\n" "Snapshots are located in "${_snapshot_dir:-}"."
+	exit 0
 }
 
 function __unhold_packages__ {
-	if [[ -n "${_held_packages}" ]]; then
+	if [[ -n "${_held_packages:-}" ]]; then
 		printf "%b\n"
 		printf "%b" "Releasing hold on packages..."
 		__lock_check__
-		sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
+		sudo aptitude -q=3 unhold ${_held_packages:-} && printf "%b\n" "done."
 	fi
 }
 
@@ -213,8 +224,11 @@ if [[ "${1:-}" =~ (-d|--debug) ]]; then
 	__debugger__
 elif [[ "${1:-}" =~ (-h|--help) ]]; then
 	__usage__
+elif [[ "${1:-}" =~ (-s|--snapshot) ]]; then
+	_snapshot_yN="y"
 elif [[ "${1:-}" =~ (-a|--autoremove) ]]; then
-	__autoremove__
+	#__autoremove__
+	_autoremove_yN="y"
 fi
 
 # Bash settings
