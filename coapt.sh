@@ -3,14 +3,15 @@
 #-----------------------------------
 # Usage Section
 
-#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} ]
-#**Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-a|--autoremove} ]
+#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-a|--autoremove} ]
 #//Description: A script meant to fit various apt-related scripts together.
-#//Examples: coapt; coapt --debug
+#//Examples: coapt; coapt --debug; coapt --autoremove
 #//Options:
-#**	-a --autoremove	Autoremove unused packages
+#//	-a --autoremove	Autoremove unused packages
 #//	-d --debug	Enable debug mode
 #//	-h --help	Display this help message
+#**	   --holds	Manage held packages
+#**	-s --snapshot	Create a snapshot of installed packages
 
 # Created: Long ago
 # Tristan M. Chase <tristan.m.chase@gmail.com>
@@ -22,21 +23,26 @@
 #-----------------------------------
 # TODO Section
 #
-# * Update dependencies section
-# * Make autoremove an option
+# * Make snapshot an option
+#   * Rework snapshot section
+#     * Get rid of apt-snapshot
+#       * coapt.sh
+#       * coapt_install.sh
+#     * Remove perl from system deps
+#       * coapt.sh
+#       * coapt_install.sh
+#     * Use dpkg --list
 #   * Update usage section
 #   * Update README.adoc
-# * Rework snapshot section
-#   * Get rid of apt-snapshot
-#     * coapt.sh
-#     * coapt_install.sh
-#   * Remove perl from system deps
-#     * coapt.sh
-#     * coapt-install.sh
-#   * Use dpkg --list
+# * Make hold management an option
+#   * Update usage section
+#   * Update README.adoc
+# * Update dependencies section
 
 # DONE
-# + Modularize steps with functions
+# + Make autoremove an option
+#   + Update usage section
+#   + Update README.adoc
 
 #-----------------------------------
 
@@ -52,82 +58,44 @@ function __main_script {
 	_share_dir=""${HOME}"/.local/share/coapt"
 
 	## Create snapshot of installed packages (optional).  apt-snapshot is a separate script.
+
 	#apt-snapshot create
-	function __snapshot__ {
-		_snapshot_dir=""${_share_dir}"/snapshots"
-		_snapshot_file=""${_snapshot_dir}"/$(date -Iseconds)-coapt.$$"
-		mkdir -p "${_snapshot_dir}"
-		dpkg --list > "${_snapshot_file}"
-	}
 
 	## Autoremove packages? (May require reboot)
-	printf "%b" "Autoremove unused kernels and packages now? (May reqiure reboot) (y/N): "
-	read _autoremove_yN
-	function __autoremove__ {
-		__lock_check
-		sudo apt autoremove --purge
-	}
-	[[ "${_autoremove_yN}" =~ (y|Y) ]] && __autoremove__ || printf "%b\n" "Autoremove: skipped"
-
 
 	## Update package lists.
+
 	function __update__ {
 	printf "%b\n" "Updating package lists..."
-	__lock_check
+	__lock_check__
 	sudo aptitude update
 	}
 
-	#__update__
+	__update__
 
 	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
-	#_hold_dir=""${HOME}"/.local/share/coapt/hold"
+
 	_hold_dir=""${_share_dir}"/hold"
 	mkdir -p "${_hold_dir}"
 	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir}"/*) ) )
 
-	function __hold_packages__ {
-		if [[ -n"${_held_packages}" ]]; then
-			printf "%b\n" "The following packages will be held at their current version:"
-			aptitude versions $(printf "%b\n" "${_held_packages[@]}")
-			printf "%b\n"
-			__lock_check
-			sudo aptitude -q=3 hold ${_held_packages}
-		fi
-	}
-
 	__hold_packages__
 
 	## Upgrade packages.
+
 	function __upgrade__ {
-		__lock_check
+		__lock_check__
 		sudo aptitude upgrade
 	}
 
-	#__upgrade__
+	__upgrade__
 
-	## Release hold on any held packages.
-	function __unhold_packages__ {
-		if [[ -n "${_held_packages}" ]]; then
-			printf "%b\n"
-			printf "%b" "Releasing hold on packages..."
-			__lock_check
-			sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
-		fi
-	}
+	## Release hold on any held packages (in __local_cleanup__).
 
-	#__unhold_packages__
-
-	## Clean package cache.
-	function __clean_cache__ {
-		printf "%b" "Cleaning cache..."
-		__lock_check
-		sudo aptitude clean
-		printf "%b\n" "done."
-		printf "%b\n" "Cleanup complete."
-		printf "%b\n"
-	}
+	## Clean package cache (in __local_cleanup__).
 
 	## Give option to reboot system, if required.
+
 	function __reboot__ {
 		:
 	}
@@ -139,7 +107,7 @@ function __main_script {
 
 		case ${_response} in
 			y|Y)
-				__local_cleanup
+				__local_cleanup__
 				_seconds="5"
 				while [ "${_seconds}" -gt 0 ]; do
 					printf "%b" "Rebooting in "${_seconds}" seconds...\033[0K\r"
@@ -160,21 +128,44 @@ function __main_script {
 } #end __main_script
 
 # Local functions
-function __local_cleanup {
+
+function __autoremove__ {
+	printf "%b\n" "Autoremoving unused packages..."
+	__lock_check__
+	sudo apt autoremove --purge
+}
+
+function __clean_cache__ {
+	printf "%b" "Cleaning cache..."
+	__lock_check__
+	sudo aptitude clean
+	printf "%b\n" "done."
+	printf "%b\n" "Cleanup complete."
+	printf "%b\n"
+}
+
+function __hold_packages__ {
+	if [[ -n"${_held_packages}" ]]; then
+		printf "%b\n" "The following packages will be held at their current version:"
+		aptitude versions $(printf "%b\n" "${_held_packages[@]}")
+		printf "%b\n"
+		__lock_check__
+		sudo aptitude -q=3 hold ${_held_packages}
+	fi
+}
+
+function __local_cleanup__ {
 	__unhold_packages__
 	__clean_cache__
 }
 
-function __lock_check {
-	## Check if any other processes have a lock on the package management system.
+## Check if any other processes have a lock on the package management system.
 
-	# Only set this if your $SHELL is bash
-	if [[ $SHELL =~ (bash) ]]; then
-		shopt -s globstar
-	fi
+# Dynamically find related lockfiles.
+_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
-	## Dynamically find related lockfiles.
-	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
+function __lock_check__ {
+
 	i=0
 	tput sc
 	#while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
@@ -192,6 +183,22 @@ function __lock_check {
 	done
 }
 
+function __snapshot__ {
+	_snapshot_dir=""${_share_dir}"/snapshots"
+	_snapshot_file=""${_snapshot_dir}"/$(date -Iseconds)-coapt.$$"
+	mkdir -p "${_snapshot_dir}"
+	dpkg --list > "${_snapshot_file}"
+}
+
+function __unhold_packages__ {
+	if [[ -n "${_held_packages}" ]]; then
+		printf "%b\n"
+		printf "%b" "Releasing hold on packages..."
+		__lock_check__
+		sudo aptitude -q=3 unhold ${_held_packages} && printf "%b\n" "done."
+	fi
+}
+
 # Source helper functions
 if [[ -e ~/.functions.sh ]]; then
 	source ~/.functions.sh
@@ -206,6 +213,8 @@ if [[ "${1:-}" =~ (-d|--debug) ]]; then
 	__debugger__
 elif [[ "${1:-}" =~ (-h|--help) ]]; then
 	__usage__
+elif [[ "${1:-}" =~ (-a|--autoremove) ]]; then
+	__autoremove__
 fi
 
 # Bash settings
@@ -215,6 +224,12 @@ set -o nounset
 set -o errtrace
 set -o pipefail
 IFS=$'\n\t'
+
+# Only set this if your $SHELL is bash
+if [[ $SHELL =~ (bash) ]]; then
+	shopt -s globstar
+fi
+
 
 # Main Script Wrapper
 if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
