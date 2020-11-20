@@ -27,10 +27,10 @@
 #   * Rework snapshot section
 #     * Get rid of apt-snapshot
 #       * coapt.sh
-#       * coapt_install.sh
+#       * install.sh
 #     * Remove perl from system deps
 #       * coapt.sh
-#       * coapt_install.sh
+#       * install.sh
 #     * Use dpkg --list
 #   * Update usage section
 #   * Update README.adoc

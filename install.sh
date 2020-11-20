@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 #
-# coapt_install.sh
+# install.sh
 #
 # Tristan M. Chase 2017-02-01
 #

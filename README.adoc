@@ -22,5 +22,5 @@ This script is designed to minimize problems encountered during upgrades.
 Copy and paste this into your favo[u]rite terminal:
 
 ....
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/tristanchase/coapt/master/coapt_install.sh)"
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/tristanchase/coapt/master/install.sh)"
 ....
