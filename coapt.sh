@@ -24,13 +24,17 @@
 #
 # * Skip __local_cleanup__ on ^C
 # * Alert user if program exits after __hold_packages__ but before __unhold_packages__
+# * Edit __reboot__ function
+# * Edit __clean_cache__ function
+# * Edit __unhold_packages__ function
+#   * Warn if error
 # * Make hold management an option
 #   * Update usage section
 #   * Update README.adoc
 # * Update dependencies section
 
 # DONE
-# + Offer a way to exit __lock_check__
+# + General file cleanup and add todos
 
 #-----------------------------------
 
@@ -44,27 +48,22 @@
 function __main_script {
 
 	## Define share directory.
-
 	_share_dir=""${HOME}"/.local/share/coapt"
 
-	# Dynamically find related lockfiles.
-
+	## Dynamically find related lockfiles.
 	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
 	## Create snapshot of installed packages and exit (optional).
-
 	if [[ "${_snapshot_yN:-}" =~ (y) ]]; then
 		__snapshot__
 	fi
 
 	## Autoremove packages (may require reboot) (optional).
-
 	if [[ "${_autoremove_yN:-}" =~ (y) ]]; then
 		__autoremove__
 	fi
 
 	## Update package lists.
-
 	function __update__ {
 	printf "%b\n" "Updating package lists..."
 	__lock_check__
@@ -74,7 +73,6 @@ function __main_script {
 	__update__
 
 	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
-
 	_hold_dir=""${_share_dir:-}"/hold"
 	mkdir -p "${_hold_dir:-}"
 	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir:-}"/*) ) )
@@ -82,7 +80,6 @@ function __main_script {
 	__hold_packages__
 
 	## Upgrade packages.
-
 	function __upgrade__ {
 		__lock_check__
 		sudo aptitude upgrade
@@ -91,15 +88,12 @@ function __main_script {
 	__upgrade__
 
 	## Release hold on any held packages.
-
 	__unhold_packages__
 
 	## Clean package cache.
-
 	__clean_cache__
 
 	## Give option to reboot system, if required.
-
 	function __reboot__ {
 		:
 	}
@@ -166,33 +160,33 @@ function __local_cleanup__ {
 #_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
 function __lock_check__ {
-if sudo fuser ${_lockfiles} ; then
-	printf "%b" "There is a lock on the package management system: wait or quit? (w/Q): "
-	read _wQ
-else
-	return 0
-fi
+	if sudo fuser ${_lockfiles} ; then
+		printf "%b" "There is a lock on the package management system: wait or quit? (w/Q): "
+		read _wQ
+	else
+		return 0
+	fi
 
-if [[ "${_wQ:-}" = "w" ]]; then
-	i=0
-	tput sc
-	while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
-		case $(($i % 4)) in
-			0 ) j="-" ;;
-			1 ) j="\\" ;;
-			2 ) j="|" ;;
-			3 ) j="/" ;;
-		esac
-		tput rc
-		printf "%b" "\r[$j] Waiting for other software managers to finish..."
-		sleep 0.5
-		((i=i+1))
-	done
-	printf "%b\n" "done."
-	printf "%b\n"  "Lock has been released."
-else
-	exit 4
-fi
+	if [[ "${_wQ:-}" = "w" ]]; then
+		i=0
+		tput sc
+		while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
+			case $(($i % 4)) in
+				0 ) j="-" ;;
+				1 ) j="\\" ;;
+				2 ) j="|" ;;
+				3 ) j="/" ;;
+			esac
+			tput rc
+			printf "%b" "\r[$j] Waiting for other software managers to finish..."
+			sleep 0.5
+			((i=i+1))
+		done
+		printf "%b\n" "done."
+		printf "%b\n"  "Lock has been released."
+	else
+		exit 4
+	fi
 }
 
 function __snapshot__ {
@@ -231,7 +225,6 @@ elif [[ "${1:-}" =~ (-h|--help) ]]; then
 elif [[ "${1:-}" =~ (-s|--snapshot) ]]; then
 	_snapshot_yN="y"
 elif [[ "${1:-}" =~ (-a|--autoremove) ]]; then
-	#__autoremove__
 	_autoremove_yN="y"
 fi
 
@@ -247,7 +240,6 @@ IFS=$'\n\t'
 if [[ $SHELL =~ (bash) ]]; then
 	shopt -s globstar
 fi
-
 
 # Main Script Wrapper
 if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
