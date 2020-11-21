@@ -22,23 +22,15 @@
 #-----------------------------------
 # TODO Section
 #
+# * Skip __local_cleanup__ on ^C
+# * Alert user if program exits after __hold_packages__ but before __unhold_packages__
 # * Make hold management an option
 #   * Update usage section
 #   * Update README.adoc
 # * Update dependencies section
 
 # DONE
-# + Make snapshot an option
-#   + Rework snapshot section
-#     + Get rid of apt-snapshot
-#       + coapt.sh
-#       + install.sh
-#     + Remove perl from system deps
-#       + coapt.sh
-#       + install.sh
-#     + Use dpkg --list
-#   + Update usage section
-#   + Update README.adoc
+# + Offer a way to exit __lock_check__
 
 #-----------------------------------
 
@@ -174,10 +166,17 @@ function __local_cleanup__ {
 #_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
 function __lock_check__ {
+if sudo fuser ${_lockfiles} ; then
+	printf "%b" "There is a lock on the package management system: wait or quit? (w/Q): "
+	read _wQ
+else
+	return 0
+fi
+
+if [[ "${_wQ:-}" = "w" ]]; then
 	i=0
 	tput sc
-	#while sudo fuser /var/lib/dpkg/{lock,lock-frontend} >/dev/null 2>&1 ; do
-	while sudo fuser ${_lockfiles:-}  >/dev/null 2>&1; do
+	while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
 		case $(($i % 4)) in
 			0 ) j="-" ;;
 			1 ) j="\\" ;;
@@ -189,6 +188,11 @@ function __lock_check__ {
 		sleep 0.5
 		((i=i+1))
 	done
+	printf "%b\n" "done."
+	printf "%b\n"  "Lock has been released."
+else
+	exit 4
+fi
 }
 
 function __snapshot__ {
