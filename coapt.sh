@@ -34,7 +34,7 @@
 # * Update dependencies section
 
 # DONE
-# + General file cleanup and add todos
+# + Remove logger function
 
 #-----------------------------------
 
@@ -212,9 +212,6 @@ function __unhold_packages__ {
 if [[ -e ~/.functions.sh ]]; then
 	source ~/.functions.sh
 fi
-
-# Low-tech logging function
-__logger__
 
 # Get some basic options
 # TODO Make this more robust
