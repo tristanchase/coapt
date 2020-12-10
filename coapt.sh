@@ -22,6 +22,7 @@
 #-----------------------------------
 # TODO Section
 #
+# * Fix held packages thing
 # * Skip __local_cleanup__ on ^C
 # * Alert user if program exits after __hold_packages__ but before __unhold_packages__
 # * Edit __reboot__ function
@@ -72,6 +73,7 @@ function __main_script {
 
 	__update__
 
+	# TODO change this to held packages file
 	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
 	_hold_dir=""${_share_dir:-}"/hold"
 	mkdir -p "${_hold_dir:-}"
@@ -141,7 +143,7 @@ function __clean_cache__ {
 }
 
 function __hold_packages__ {
-	if [[ -n"${_held_packages:-}" ]]; then
+	if [[ -n "${_held_packages:-}" ]]; then
 		printf "%b\n" "The following packages will be held at their current version:"
 		aptitude versions $(printf "%b\n" "${_held_packages[@]:-}")
 		printf "%b\n"
