@@ -22,7 +22,6 @@
 #-----------------------------------
 # TODO Section
 #
-# * Fix held packages thing
 # * Skip __local_cleanup__ on ^C
 # * Alert user if program exits after __hold_packages__ but before __unhold_packages__
 # * Edit __reboot__ function
@@ -35,7 +34,7 @@
 # * Update dependencies section
 
 # DONE
-# + Remove logger function
+# + Fix held packages thing
 
 #-----------------------------------
 
@@ -50,6 +49,13 @@ function __main_script {
 
 	## Define share directory.
 	_share_dir=""${HOME}"/.local/share/coapt"
+
+	## Hold packages specified in "${HOME}"/.local/share/coapt/hold/held-packages
+	_hold_dir=""${_share_dir:-}"/hold"
+	mkdir -p "${_hold_dir:-}"
+	_held_packages_file="${_hold_dir:-}/held-packages"
+	touch ${_held_packages_file}
+	_held_packages="$(cat ${_held_packages_file})"
 
 	## Dynamically find related lockfiles.
 	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
@@ -66,18 +72,12 @@ function __main_script {
 
 	## Update package lists.
 	function __update__ {
-	printf "%b\n" "Updating package lists..."
+	#printf "%b\n" "Updating package lists..."
 	__lock_check__
 	sudo aptitude update
 	}
 
 	__update__
-
-	# TODO change this to held packages file
-	## Hold packages specified in "${HOME}"/.local/share/coapt/hold
-	_hold_dir=""${_share_dir:-}"/hold"
-	mkdir -p "${_hold_dir:-}"
-	_held_packages=( $(basename -a $(printf "%b\n" "${_hold_dir:-}"/*) ) )
 
 	__hold_packages__
 
