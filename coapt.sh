@@ -24,7 +24,6 @@
 #
 # * Skip __local_cleanup__ on ^C
 # * Alert user if program exits after __hold_packages__ but before __unhold_packages__
-# * Edit __reboot__ function
 # * Edit __clean_cache__ function
 # * Edit __unhold_packages__ function
 #   * Warn if error
@@ -34,7 +33,7 @@
 # * Update dependencies section
 
 # DONE
-# + Fix held packages thing
+# + Edit __reboot__ function
 
 #-----------------------------------
 
@@ -102,17 +101,18 @@ function __main_script {
 
 	if [ -f /var/run/reboot-required ]; then
 		cat /var/run/reboot-required
-		printf "%b" -n "Would you like to reboot the system now? (y/N): "
+		printf "%b" "Would you like to reboot the system now? (y/N): "
 		read _response
 
 		case ${_response:-} in
 			y|Y)
 				_seconds="5"
-				while [ "${_seconds:-}" -gt 0 ]; do
+				while [ "${_seconds:-}" -gt -1 ]; do
 					printf "%b" "Rebooting in "${_seconds:-}" seconds...\033[0K\r"
 					sleep 1
 					: $((_seconds--))
 				done
+				printf "%b\n" "Reboot!"
 				sudo reboot
 				;;
 
