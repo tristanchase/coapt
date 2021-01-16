@@ -54,7 +54,7 @@ function __main_script {
 	mkdir -p "${_hold_dir:-}"
 	_held_packages_file="${_hold_dir:-}/held-packages"
 	touch ${_held_packages_file}
-	_held_packages="$(cat ${_held_packages_file})"
+	_held_packages="$(sort -u ${_held_packages_file})"
 
 	## Dynamically find related lockfiles.
 	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
