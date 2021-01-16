@@ -71,9 +71,9 @@ function __main_script {
 
 	## Update package lists.
 	function __update__ {
-	#printf "%b\n" "Updating package lists..."
-	__lock_check__
-	sudo aptitude update
+		sudo printf "%b\n" "Updating package lists..."
+		__lock_check__
+		sudo aptitude update
 	}
 
 	__update__
@@ -211,9 +211,16 @@ function __unhold_packages__ {
 }
 
 # Source helper functions
-if [[ -e ~/.functions.sh ]]; then
-	source ~/.functions.sh
-fi
+for _helper_file in functions colors git-prompt; do
+	if [[ ! -e "${HOME}"/."${_helper_file}".sh ]]; then
+		printf "%b\n" "Downloading missing script file "${_helper_file}".sh..."
+		sleep 1
+		wget -nv -P "${HOME}" https://raw.githubusercontent.com/tristanchase/dotfiles/master/"${_helper_file}".sh
+		mv "${HOME}"/"${_helper_file}".sh "${HOME}"/."${_helper_file}".sh
+	fi
+done
+
+source "${HOME}"/.functions.sh
 
 # Get some basic options
 # TODO Make this more robust
@@ -247,7 +254,6 @@ if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
 	trap __cleanup__ EXIT
 
 	__main_script
-
 
 fi
 
