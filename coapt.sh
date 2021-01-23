@@ -112,6 +112,7 @@ function __main_script {
 					sleep 1
 					: $((_seconds--))
 				done
+				printf "%b\n"
 				printf "%b\n" "Reboot!"
 				sudo reboot
 				;;
@@ -129,7 +130,7 @@ function __main_script {
 # Local functions
 
 function __autoremove__ {
-	printf "%b\n" "Autoremoving unused packages..."
+	sudo printf "%b\n" "Autoremoving unused packages..."
 	__lock_check__
 	sudo apt autoremove --purge
 }
