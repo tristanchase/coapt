@@ -47,9 +47,9 @@
 function __main_script {
 
 	## Define share directory.
-	_share_dir=""${HOME}"/.local/share/coapt"
+	_share_dir=${HOME}/.local/share/coapt
 
-	## Hold packages specified in "${HOME}"/.local/share/coapt/hold/held-packages
+	## Hold packages specified in ${HOME}/.local/share/coapt/hold/held-packages
 	_hold_dir=""${_share_dir:-}"/hold"
 	mkdir -p "${_hold_dir:-}"
 	_held_packages_file="${_hold_dir:-}/held-packages"
@@ -213,15 +213,15 @@ function __unhold_packages__ {
 
 # Source helper functions
 for _helper_file in functions colors git-prompt; do
-	if [[ ! -e "${HOME}"/."${_helper_file}".sh ]]; then
+	if [[ ! -e ${HOME}/."${_helper_file}".sh ]]; then
 		printf "%b\n" "Downloading missing script file "${_helper_file}".sh..."
 		sleep 1
-		wget -nv -P "${HOME}" https://raw.githubusercontent.com/tristanchase/dotfiles/master/"${_helper_file}".sh
-		mv "${HOME}"/"${_helper_file}".sh "${HOME}"/."${_helper_file}".sh
+		wget -nv -P ${HOME} https://raw.githubusercontent.com/tristanchase/dotfiles/master/"${_helper_file}".sh
+		mv ${HOME}/"${_helper_file}".sh ${HOME}/."${_helper_file}".sh
 	fi
 done
 
-source "${HOME}"/.functions.sh
+source ${HOME}/.functions.sh
 
 # Get some basic options
 # TODO Make this more robust
