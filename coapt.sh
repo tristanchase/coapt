@@ -3,8 +3,8 @@
 #-----------------------------------
 # Usage Section
 
-#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-s|--snapshot} | {-a|--autoremove} ]
-#//Description: A script meant to fit various apt-related scripts together.
+#//Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-s|--snapshot} | {-a|--autoremove} | {-i|--ignore-hold} ]
+#//Description: coapt is a collection of apt-related scripts arranged in a logical order (see README.adoc).
 #//Examples: coapt; coapt --debug; coapt --autoremove
 #//Options:
 #//	-a --autoremove		Autoremove unused packages

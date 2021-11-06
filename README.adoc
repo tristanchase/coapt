@@ -17,6 +17,22 @@
 
 This script is designed to minimize problems encountered during upgrades.
 
+== Usage
+
+....
+Usage: coapt [ {-d|--debug} ] [ {-h|--help} | {-s|--snapshot} | {-a|--autoremove} | {-i|--ignore-hold} ]
+
+Examples: coapt; coapt --debug; coapt --autoremove
+
+Options:
+	-a --autoremove		Autoremove unused packages
+	-d --debug		Enable debug mode
+	-h --help		Display this help message
+	   --holds		Manage held packages (not implemented yet)
+	-i --ignore-hold	Ignore holds on packages
+	-s --snapshot		Create a snapshot of installed packages and exit
+....
+
 == Installing
 
 Copy and paste this into your favo[u]rite terminal:
