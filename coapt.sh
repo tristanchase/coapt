@@ -7,11 +7,12 @@
 #//Description: A script meant to fit various apt-related scripts together.
 #//Examples: coapt; coapt --debug; coapt --autoremove
 #//Options:
-#//	-a --autoremove	Autoremove unused packages
-#//	-d --debug	Enable debug mode
-#//	-h --help	Display this help message
-#**	   --holds	Manage held packages
-#//	-s --snapshot	Create a snapshot of installed packages and exit
+#//	-a --autoremove		Autoremove unused packages
+#//	-d --debug		Enable debug mode
+#//	-h --help		Display this help message
+#**	   --holds		Manage held packages
+#//	-i --ignore-hold	Ignore holds on packages
+#//	-s --snapshot		Create a snapshot of installed packages and exit
 
 # Created: Long ago
 # Tristan M. Chase <tristan.m.chase@gmail.com>
@@ -24,16 +25,16 @@
 #
 # * Skip __local_cleanup__ on ^C
 # * Alert user if program exits after __hold_packages__ but before __unhold_packages__
-# * Edit __clean_cache__ function
-# * Edit __unhold_packages__ function
-#   * Warn if error
 # * Make hold management an option
 #   * Update usage section
 #   * Update README.adoc
 # * Update dependencies section
 
 # DONE
-# + Edit __reboot__ function
+# + Add --ignore-hold option
+# + Edit __clean_cache__ function
+# + Edit __unhold_packages__ function
+#   + Warn if error
 
 #-----------------------------------
 
@@ -83,7 +84,11 @@ function __main_script {
 	## Upgrade packages.
 	function __upgrade__ {
 		__lock_check__
+	if [[ "${_ignore_hold_yN:-}" =~ (y) ]]; then
+		sudo apt-get upgrade --ignore-hold
+	else
 		sudo aptitude upgrade
+	fi
 	}
 
 	__upgrade__
@@ -139,7 +144,6 @@ function __clean_cache__ {
 	printf "%b" "Cleaning cache..."
 	__lock_check__
 	sudo aptitude clean && printf "%b\n" "done." || printf "%b\n" "Error! Unable to clean cache."
-	printf "%b\n" "Cleanup complete."
 	printf "%b\n"
 }
 
@@ -207,7 +211,8 @@ function __unhold_packages__ {
 		printf "%b\n"
 		printf "%b" "Releasing hold on packages..."
 		__lock_check__
-		sudo aptitude -q=3 unhold ${_held_packages:-} && printf "%b\n" "done."
+		sudo aptitude -q=3 unhold ${_held_packages:-} && printf "%b\n" "done." \
+			|| printf "%b\n" "Error! Unable to release hold on packages."
 	fi
 }
 
@@ -233,6 +238,8 @@ elif [[ "${1:-}" =~ (-s|--snapshot) ]]; then
 	_snapshot_yN="y"
 elif [[ "${1:-}" =~ (-a|--autoremove) ]]; then
 	_autoremove_yN="y"
+elif [[ "${1:-}" =~ (-i|--ignore-hold) ]]; then
+	_ignore_hold_yN="y"
 fi
 
 # Bash settings
