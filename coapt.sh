@@ -47,25 +47,28 @@
 # Put main script here
 function __main_script {
 
-	## Define share directory.
+	# Define directories.
 	_share_dir=${HOME}/.local/share/coapt
+	_hold_dir=""${_share_dir:-}"/hold" && mkdir -p "${_hold_dir}"
+	_log_dir=""${_share_dir:-}"/log" && mkdir -p "${_log_dir}"
 
-	## Hold packages specified in ${HOME}/.local/share/coapt/hold/held-packages
-	_hold_dir=""${_share_dir:-}"/hold"
-	mkdir -p "${_hold_dir:-}"
-	_held_packages_file="${_hold_dir:-}/held-packages"
-	touch ${_held_packages_file}
+	# Define log file.
+	_log_file=""${_log_dir:-}"/"$(date -Iseconds).log.$$"" && touch "${_log_file}"
+	__start_logging__
+
+	# Hold packages specified in ${HOME}/.local/share/coapt/hold/held-packages
+	_held_packages_file="${_hold_dir:-}/held-packages" && touch "${_held_packages_file}"
 	_held_packages="$(sort -u ${_held_packages_file})"
 
-	## Dynamically find related lockfiles.
+	# Dynamically find related lockfiles.
 	_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
 
-	## Create snapshot of installed packages and exit (optional).
+	# Create snapshot of installed packages and exit (optional).
 	if [[ "${_snapshot_yN:-}" =~ (y) ]]; then
 		__snapshot__
 	fi
 
-	## Autoremove packages, resolve purge errors, and exit or reboot if necessary (optional).
+	# Autoremove packages, resolve purge errors, and exit or reboot if necessary (optional).
 	if [[ "${_autoremove_yN:-}" =~ (y) ]]; then
 		__autoremove__
 		#__resolve_purge_errors__
@@ -73,21 +76,20 @@ function __main_script {
 		exit 0
 	fi
 
-	## Update package lists. Hold selected packages at their current version.
+	# Update package lists. Hold selected packages at their current version.
 	__update_packages__
-
 	__hold_packages__
 
-	## Upgrade packages.
+	# Upgrade packages.
 	__upgrade_packages__
 
-	## Release hold on any held packages.
+	# Release hold on any held packages.
 	__unhold_packages__
 
-	## Clean package cache.
+	# Clean package cache.
 	__clean_cache__
 
-	## Give option to reboot system, if required.
+	# Give option to reboot system, if required.
 	__reboot_option__
 
 } #end __main_script
@@ -97,7 +99,7 @@ function __main_script {
 function __autoremove__ {
 	sudo printf "%b\n" "Autoremoving unused packages..."
 	__lock_check__
-	sudo apt autoremove --purge
+	sudo apt-get autoremove --purge
 }
 
 function __clean_cache__ {
@@ -121,7 +123,7 @@ function __local_cleanup__ {
 	:
 }
 
-## Check if any other processes have a lock on the package management system.
+# Check if any other processes have a lock on the package management system.
 
 # Dynamically find related lockfiles.
 #_lockfiles=( "$(printf "%b\n" /var/** | grep -E '/(daily_)?lock(-frontend)?'$)" )
@@ -189,6 +191,11 @@ function __resolve_purge_errors__ {
 	printf "%b\n" "The following errors occured while purging packages:"
 	grep -E 'not empty|failed|warning' /var/log/apt/term.log
 }
+
+function __start_logging__ {
+	exec > >(tee "${_log_file:-}") 2>&1
+}
+
 
 function __snapshot__ {
 	_snapshot_dir=""${_share_dir:-}"/snapshots"
