@@ -65,33 +65,21 @@ function __main_script {
 		__snapshot__
 	fi
 
-	## Autoremove packages (may require reboot) (optional).
+	## Autoremove packages, resolve purge errors, and exit or reboot if necessary (optional).
 	if [[ "${_autoremove_yN:-}" =~ (y) ]]; then
 		__autoremove__
+		#__resolve_purge_errors__
+		__reboot_option__
+		exit 0
 	fi
 
-	## Update package lists.
-	function __update__ {
-		sudo printf "%b\n" "Updating package lists..."
-		__lock_check__
-		sudo aptitude update
-	}
-
-	__update__
+	## Update package lists. Hold selected packages at their current version.
+	__update_packages__
 
 	__hold_packages__
 
 	## Upgrade packages.
-	function __upgrade__ {
-		__lock_check__
-	if [[ "${_ignore_hold_yN:-}" =~ (y) ]]; then
-		sudo apt-get upgrade --ignore-hold
-	else
-		sudo aptitude upgrade
-	fi
-	}
-
-	__upgrade__
+	__upgrade_packages__
 
 	## Release hold on any held packages.
 	__unhold_packages__
@@ -100,35 +88,7 @@ function __main_script {
 	__clean_cache__
 
 	## Give option to reboot system, if required.
-	function __reboot__ {
-		:
-	}
-
-	if [ -f /var/run/reboot-required ]; then
-		cat /var/run/reboot-required
-		printf "%b" "Would you like to reboot the system now? (y/N): "
-		read _response
-
-		case ${_response:-} in
-			y|Y)
-				_seconds="5"
-				while [ "${_seconds:-}" -gt -1 ]; do
-					printf "%b" "Rebooting in "${_seconds:-}" seconds...\033[0K\r"
-					sleep 1
-					: $((_seconds--))
-				done
-				printf "%b\n"
-				printf "%b\n" "Reboot!"
-				sudo reboot
-				;;
-
-			*)
-				__info__ ""$(basename ${0}).$$": reboot deferred by user."
-				exit 3 #reboot deferred
-				;;
-		esac
-
-	fi
+	__reboot_option__
 
 } #end __main_script
 
@@ -196,6 +156,40 @@ function __lock_check__ {
 	fi
 }
 
+function __reboot_option__ {
+	if [ -f /var/run/reboot-required ]; then
+		cat /var/run/reboot-required
+		printf "%b" "Would you like to reboot the system now? (y/N): "
+		read _response
+
+		case ${_response:-} in
+			y|Y)
+				_seconds="5"
+				while [ "${_seconds:-}" -gt -1 ]; do
+					printf "%b" "Rebooting in "${_seconds:-}" seconds...\033[0K\r"
+					sleep 1
+					: $((_seconds--))
+				done
+				printf "%b\n"
+				printf "%b\n" "Reboot!"
+				sudo reboot
+				;;
+
+			*)
+				__info__ ""$(basename ${0}).$$": reboot deferred by user."
+				exit 3 #reboot deferred
+				;;
+		esac
+
+	fi
+}
+
+function __resolve_purge_errors__ {
+	printf "%b\n" ""
+	printf "%b\n" "The following errors occured while purging packages:"
+	grep -E 'not empty|failed|warning' /var/log/apt/term.log
+}
+
 function __snapshot__ {
 	_snapshot_dir=""${_share_dir:-}"/snapshots"
 	_snapshot_file=""${_snapshot_dir:-}"/$(date -Iseconds)-coapt.$$"
@@ -214,6 +208,21 @@ function __unhold_packages__ {
 		sudo aptitude -q=3 unhold ${_held_packages:-} && printf "%b\n" "done." \
 			|| printf "%b\n" "Error! Unable to release hold on packages."
 	fi
+}
+
+function __update_packages__ {
+	sudo printf "%b\n" "Updating package lists..."
+	__lock_check__
+	sudo aptitude update
+}
+
+function __upgrade_packages__ {
+	__lock_check__
+if [[ "${_ignore_hold_yN:-}" =~ (y) ]]; then
+	sudo apt-get upgrade --ignore-hold
+else
+	sudo aptitude upgrade
+fi
 }
 
 # Source helper functions
