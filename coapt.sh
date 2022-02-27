@@ -49,12 +49,17 @@ function __main_script {
 
 	# Define directories.
 	_share_dir=${HOME}/.local/share/coapt
+	_error_dir=""${_share_dir:-}"/errors" && mkdir -p "${_error_dir:-}"
 	_hold_dir=""${_share_dir:-}"/hold" && mkdir -p "${_hold_dir}"
 	_log_dir=""${_share_dir:-}"/log" && mkdir -p "${_log_dir}"
+	_snapshot_dir=""${_share_dir:-}"/snapshots" && mkdir -p "${_snapshot_dir:-}"
 
 	# Define log file.
-	_log_file=""${_log_dir:-}"/"$(date -Iseconds).log.$$"" && touch "${_log_file}"
+	_log_file=""${_log_dir:-}"/"$(date -Iseconds)-coapt.log.$$"" && touch "${_log_file}"
 	__start_logging__
+
+	# Define error files.
+	_purge_error_file=""${_error_dir}"/purge-errors"
 
 	# Hold packages specified in ${HOME}/.local/share/coapt/hold/held-packages
 	_held_packages_file="${_hold_dir:-}/held-packages" && touch "${_held_packages_file}"
@@ -71,7 +76,7 @@ function __main_script {
 	# Autoremove packages, resolve purge errors, and exit or reboot if necessary (optional).
 	if [[ "${_autoremove_yN:-}" =~ (y) ]]; then
 		__autoremove__
-		#__resolve_purge_errors__
+		__resolve_purge_errors__
 		__reboot_option__
 		exit 0
 	fi
@@ -187,9 +192,12 @@ function __reboot_option__ {
 }
 
 function __resolve_purge_errors__ {
-	printf "%b\n" ""
-	printf "%b\n" "The following errors occured while purging packages:"
-	grep -E 'not empty|failed|warning' /var/log/apt/term.log
+	grep -E 'not empty|failed|warning' "${_log_file}" > "${_purge_error_file}"
+	if [[ -s "${_purge_error_file}" ]]; then
+		printf "%b\n" ""
+		printf "%b\n" "The following errors occured while purging packages:"
+		cat "${_purge_error_file}"
+	fi
 }
 
 function __start_logging__ {
@@ -198,10 +206,8 @@ function __start_logging__ {
 
 
 function __snapshot__ {
-	_snapshot_dir=""${_share_dir:-}"/snapshots"
 	_snapshot_file=""${_snapshot_dir:-}"/$(date -Iseconds)-coapt.$$"
 	printf "%b" "Creating snapshot..."
-	mkdir -p "${_snapshot_dir:-}"
 	dpkg --list > "${_snapshot_file:-}" && printf "%b\n" "done."
 	printf "%b\n" "Snapshots are located in "${_snapshot_dir:-}"."
 	exit 0
@@ -261,9 +267,9 @@ fi
 # Bash settings
 # Same as set -euE -o pipefail
 #set -o errexit # aptitude upgrade exits with 1 if aborted
-set -o nounset
-set -o errtrace
-set -o pipefail
+#set -o nounset
+#set -o errtrace
+#set -o pipefail
 IFS=$'\n\t'
 
 # Only set this if your $SHELL is bash
