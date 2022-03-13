@@ -81,15 +81,11 @@ function __main_script {
 		exit 0
 	fi
 
-	# Update package lists. Hold selected packages at their current version.
+	# Update package lists.
 	__update_packages__
-	__hold_packages__
 
 	# Upgrade packages.
 	__upgrade_packages__
-
-	# Release hold on any held packages.
-	__unhold_packages__
 
 	# Clean package cache.
 	__clean_cache__
@@ -234,7 +230,9 @@ function __upgrade_packages__ {
 if [[ "${_ignore_hold_yN:-}" =~ (y) ]]; then
 	sudo apt-get upgrade --ignore-hold
 else
+	__hold_packages__
 	sudo aptitude upgrade
+	__unhold_packages__
 fi
 }
 
