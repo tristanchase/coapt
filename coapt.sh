@@ -142,13 +142,13 @@ function __lock_check__ {
 		tput sc
 		while sudo fuser ${_lockfiles}  >/dev/null 2>&1; do
 			case $(($i % 4)) in
-				0 ) j="-" ;;
-				1 ) j="\\" ;;
-				2 ) j="|" ;;
-				3 ) j="/" ;;
+				0 ) j="- " ;;
+				1 ) j="\\ " ;;
+				2 ) j="| " ;;
+				3 ) j="/ " ;;
 			esac
 			tput rc
-			printf "%b" "\r[$j] Waiting for other software managers to finish..."
+			printf "%b" "\r"$j"Waiting for other software managers to finish..."
 			sleep 0.5
 			((i=i+1))
 		done
@@ -241,7 +241,7 @@ for _helper_file in functions colors git-prompt; do
 	if [[ ! -e ${HOME}/."${_helper_file}".sh ]]; then
 		printf "%b\n" "Downloading missing script file "${_helper_file}".sh..."
 		sleep 1
-		wget -nv -P ${HOME} https://raw.githubusercontent.com/tristanchase/dotfiles/master/"${_helper_file}".sh
+		wget -nv -P ${HOME} https://raw.githubusercontent.com/tristanchase/dotfiles/main/"${_helper_file}".sh
 		mv ${HOME}/"${_helper_file}".sh ${HOME}/."${_helper_file}".sh
 	fi
 done
