@@ -56,7 +56,7 @@ function __main_script {
 
 	# Define log file.
 	_log_file=""${_log_dir:-}"/"$(date -Iseconds)-coapt.log.$$"" && touch "${_log_file}"
-	__start_logging__
+	#__start_logging__
 
 	# Define error files.
 	_purge_error_file=""${_error_dir}"/purge-errors"
