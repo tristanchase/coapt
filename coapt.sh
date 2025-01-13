@@ -10,7 +10,6 @@
 #//	-a --autoremove		Autoremove unused packages
 #//	-d --debug		Enable debug mode
 #//	-h --help		Display this help message
-#**	   --holds		Manage held packages
 #//	-i --ignore-hold	Ignore holds on packages
 #//	-s --snapshot		Create a snapshot of installed packages and exit
 
