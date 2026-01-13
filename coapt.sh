@@ -11,6 +11,7 @@
 #//	-d --debug		Enable debug mode
 #//	-h --help		Display this help message
 #//	-i --ignore-hold	Ignore holds on packages
+#//	-n --no-reboot		Do not give option to reboot
 #//	-s --snapshot		Create a snapshot of installed packages and exit
 
 # Created: Long ago
@@ -90,7 +91,9 @@ function __main_script {
 	__clean_cache__
 
 	# Give option to reboot system, if required.
-	__reboot_option__
+	if ! [[ "${_no_reboot_yN}" =~ (y) ]]; then
+		__reboot_option__
+	fi
 
 } #end __main_script
 
@@ -259,6 +262,8 @@ elif [[ "${1:-}" =~ (-a|--autoremove) ]]; then
 	_autoremove_yN="y"
 elif [[ "${1:-}" =~ (-i|--ignore-hold) ]]; then
 	_ignore_hold_yN="y"
+elif [[ "${1:-}" =~ (-n|--no-reboot) ]]; then
+	_no_reboot_yN="y"
 fi
 
 # Bash settings
